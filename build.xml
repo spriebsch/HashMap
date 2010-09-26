@@ -1,0 +1,87 @@
+<project name="HashMap" default="build" basedir=".">
+
+    <property name="src"      location="src"/>
+    <property name="tests"    location="tests"/>
+
+    <property name="build"    location="_build"/>
+    <property name="docs"     location="_docs"/>
+    <property name="coverage" location="_coverage"/>
+
+    <target name="init">
+        <mkdir dir="${build}"/>
+        <mkdir dir="${docs}"/>
+        <mkdir dir="${coverage}"/>
+    </target>
+
+    <target name="sniff" description="Runs PHP_CodeSniffer">
+        <exec executable="phpcs" failonerror="true">
+            <arg value="-s"/>
+            <arg value="--standard=${basedir}/spriebsch.xml"/>
+            <arg value="src"/>
+        </exec>
+        <exec executable="phpcs" failonerror="true">
+            <arg value="-s"/>
+            <arg value="--standard=${basedir}/spriebsch.xml"/>
+            <arg value="tests"/>
+        </exec>
+    </target>
+
+    <target name="autoload" description="Builds the autoloaders">
+        <exec executable="phpab" failonerror="true">
+            <arg value="-o"/>
+            <arg value="${src}/Autoload.php"/>
+            <arg value="--indent"/>
+            <arg value='"            "'/>
+            <arg value="-t"/>
+            <arg value="templates/autoload.php.tpl"/>
+            <arg value="${src}"/>
+        </exec>
+        <exec executable="phpab" failonerror="true">
+            <arg value="-o"/>
+            <arg value="${tests}/Autoload.php"/>
+            <arg value="--indent"/>
+            <arg value='"            "'/>
+            <arg value="-t"/>
+            <arg value="templates/autoload.php.tpl"/>
+            <arg value="${tests}"/>
+        </exec>
+    </target>
+
+    <target name="test" depends="init, autoload" description="Runs unit tests">
+        <exec executable="phpunit" failonerror="true"/>
+    </target>
+
+    <target name="phar" depends="init" description="Creates a Phar archive">
+        <exec executable="php" failonerror="true">
+            <arg value="scripts/createPhar.php"/>
+            <arg value="${ant.project.name}"/>
+            <arg value="${src}"/>
+            <arg value="${build}"/>
+        </exec>
+    </target>
+
+    <target name="doc" depends="init" description="Creates API documentation">
+        <exec executable="phpdoc" failonerror="true">
+            <arg value="-dn"/>
+            <arg value="JobQueue"/>
+            <arg value="-d"/>
+            <arg value="${src}"/>
+            <arg value="-t"/>
+            <arg value="${docs}"/>
+            <arg value="-o"/>
+            <arg value="HTML:frames:earthli"/>
+            <arg value="-i"/>
+            <arg value="Autoload.php"/>
+        </exec>
+    </target>
+
+    <target name="build" depends="clean, autoload, test, doc, phar">
+    </target>
+
+    <target name="clean" description="Cleans up">
+        <delete dir="${build}"/>
+        <delete dir="${docs}"/>
+        <delete dir="${coverage}"/>
+    </target>
+
+</project>
